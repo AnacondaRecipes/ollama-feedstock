@@ -1,7 +1,8 @@
-# Build a CPU (None) variant plus CUDA 12.9 / 13.0 variants on Linux.
-# Aggregate CBC only lists 12.9/13.0, so add None here for the CPU build.
+# Build a CPU ("None") variant plus CUDA 12.9 / 13.0 variants on Linux.
+# Aggregate CBC only lists 12.9/13.0, so add "None" here for the CPU build.
+# Quoted so meta.yaml selectors and recipe.yaml compare against the string.
 cuda_compiler_version:
-  - None                     # [osx or win]
-  - None                     # [linux]
-  - 12.9                     # [linux]
-  - 13.0                     # [linux]
+  - "None"                   # [osx or win]
+  - "None"                   # [linux]
+  - "12.9"                   # [linux]
+  - "13.0"                   # [linux]
