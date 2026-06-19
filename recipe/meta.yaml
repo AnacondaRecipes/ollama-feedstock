@@ -21,6 +21,15 @@ build:
   skip: true  # [win or osx]
   ignore_run_exports_from:
     - libcublas-dev    # [cuda_compiler_version != "None"]
+  # ollama vendors its CUDA runtime under lib/ollama/cuda_vXX/ (loaded via $ORIGIN
+  # rpath) and links the driver stub libcuda.so.1 (present only at runtime on a GPU
+  # host). Whitelist these so --error-overlinking doesn't flag the vendored/stub DSOs.
+  missing_dso_whitelist:    # [cuda_compiler_version != "None"]
+    - "**/libcuda.so*"      # [cuda_compiler_version != "None"]
+    - "**/libggml-base.so*" # [cuda_compiler_version != "None"]
+    - "**/libcublas.so*"    # [cuda_compiler_version != "None"]
+    - "**/libcublasLt.so*"  # [cuda_compiler_version != "None"]
+    - "**/libcudart.so*"    # [cuda_compiler_version != "None"]
 
 requirements:
   build:
