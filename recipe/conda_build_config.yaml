@@ -1,4 +1,7 @@
-MACOSX_SDK_VERSION:        # [osx]
-  - "14.5"                 # [osx]
-c_stdlib_version:  # [osx and x86_64]
-  - "11.0"                 # [osx and x86_64]
+# Build a CPU (None) variant plus CUDA 12.9 / 13.0 variants on Linux.
+# Aggregate CBC only lists 12.9/13.0, so add None here for the CPU build.
+cuda_compiler_version:
+  - None                     # [osx or win]
+  - None                     # [linux]
+  - 12.9                     # [linux]
+  - 13.0                     # [linux]
