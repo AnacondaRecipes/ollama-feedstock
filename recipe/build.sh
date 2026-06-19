@@ -9,17 +9,15 @@ fi
 go mod edit -replace github.com/mattn/go-localereader@v0.0.1=github.com/mattn/go-localereader@v0.0.2-0.20220822084749-2491eb6c1c75
 go mod tidy
 
+# Select the GPU backend from cuda_compiler_version. The CPU variant's sentinel is
+# "none" (the gpu_variant zip), but tolerate "None"/empty too to stay robust.
 CMAKE_BACKEND_ARGS=()
-if [[ ${cuda_compiler_version} != "None" ]]; then
-  if [[ ${cuda_compiler_version} == 12.* ]]; then
-    CMAKE_BACKEND_ARGS=(-DOLLAMA_LLAMA_BACKENDS=cuda_v12)
-  elif [[ ${cuda_compiler_version} == 13.* ]]; then
-    CMAKE_BACKEND_ARGS=(-DOLLAMA_LLAMA_BACKENDS=cuda_v13)
-  else
-    echo "unsupported cuda version"
-    exit 1
-  fi
-fi
+case "${cuda_compiler_version}" in
+  12.*) CMAKE_BACKEND_ARGS=(-DOLLAMA_LLAMA_BACKENDS=cuda_v12) ;;
+  13.*) CMAKE_BACKEND_ARGS=(-DOLLAMA_LLAMA_BACKENDS=cuda_v13) ;;
+  none|None|"") ;;  # CPU-only build, no GPU backend
+  *) echo "unsupported cuda version: '${cuda_compiler_version}'"; exit 1 ;;
+esac
 
 # The native runtime (ggml/llama.cpp built from the pinned LLAMA_CPP_VERSION via
 # cmake FetchContent) and the Go binary are both produced by the cmake build.
