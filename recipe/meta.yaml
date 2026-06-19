@@ -12,12 +12,13 @@ source:
 
 build:
   # CUDA variants get build_number + 100 so the solver prefers the CPU build.
-  number: 0                                                                                      # [cuda_compiler_version == "None"]
-  number: 100                                                                                    # [cuda_compiler_version != "None"]
-  string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}                                                  # [cuda_compiler_version == "None"]
-  string: cuda{{ cuda_compiler_version | replace('.', '') }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}   # [cuda_compiler_version != "None"]
-  # TODO(PKG-15685): Windows (m2w64 go-cgo + CUDA + ninja) needs work; conda-forge win is also red.
-  skip: true  # [win]
+  # Inline jinja (not duplicate selector keys) keeps the recipe linter happy.
+  number: {{ 100 if (cuda_compiler_version | default("None")) != "None" else 0 }}
+  string: {{ ("cuda" + (cuda_compiler_version | replace('.', '')) if (cuda_compiler_version | default("None")) != "None" else "cpu") }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
+  # TODO(PKG-15685): Windows (m2w64 go-cgo + CUDA + ninja) and osx (host llama-ui-embed
+  # links conda libc++ against AR's older SDK libc++ -> missing bad_function_call) need
+  # follow-up work; conda-forge's win builds are also red. This PR ships linux only.
+  skip: true  # [win or osx]
   ignore_run_exports_from:
     - libcublas-dev    # [cuda_compiler_version != "None"]
 

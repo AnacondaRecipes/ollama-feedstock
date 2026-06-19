@@ -30,9 +30,11 @@ build:
       else: [build.sh]
   skip:
     - cuda and match(cuda_compiler_version, "<12")
-    # TODO(PKG-15685): Windows build (m2w64 go-cgo + CUDA + ninja) needs work;
-    # conda-forge's win builds are also currently red. Track as a follow-up.
+    # TODO(PKG-15685): Windows (m2w64 go-cgo + CUDA + ninja) and osx (host
+    # llama-ui-embed links conda libc++ against AR's older SDK) need follow-up;
+    # conda-forge's win builds are also currently red. This PR ships linux only.
     - win
+    - osx
 
 requirements:
   build:
