@@ -1,8 +1,19 @@
-# Build a CPU ("None") variant plus CUDA 12.9 / 13.0 variants on Linux.
-# Aggregate CBC only lists 12.9/13.0, so add "None" here for the CPU build.
-# Quoted so meta.yaml selectors and recipe.yaml compare against the string.
+# CPU ("none") variant plus CUDA 12.9 / 13.0 variants on Linux. gpu_variant is
+# zipped with cuda_compiler_version so "is GPU?" and "which toolkit?" stay aligned.
+# This local list REPLACES aggregate's cuda_compiler_version (which lacks "none"),
+# so all three values must be enumerated here. cuda_compiler (cuda-nvcc) is
+# inherited from the aggregate CBC and intentionally not redefined.
+gpu_variant:
+  - none
+  - cuda-12                  # [linux]
+  - cuda-13                  # [linux]
+
 cuda_compiler_version:
-  - "None"                   # [osx or win]
-  - "None"                   # [linux]
-  - "12.9"                   # [linux]
-  - "13.0"                   # [linux]
+  - none
+  - 12.9                     # [linux]
+  - 13.0                     # [linux]
+
+zip_keys:
+  -
+    - gpu_variant
+    - cuda_compiler_version

@@ -11,25 +11,26 @@ source:
     - 0001-cmake-forward-cross-compilation-vars.patch
 
 build:
-  # CUDA variants get build_number + 100 so the solver prefers the CPU build.
-  # Inline jinja (not duplicate selector keys) keeps the recipe linter happy.
-  number: {{ 100 if (cuda_compiler_version | default("None")) != "None" else 0 }}
-  string: {{ ("cuda" + (cuda_compiler_version | replace('.', '')) if (cuda_compiler_version | default("None")) != "None" else "cpu") }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
+  # CUDA variants get build_number + 100 so the solver prefers them on GPU hosts.
+  number: 100  # [(gpu_variant or "").startswith("cuda")]
+  number: 0    # [gpu_variant == "none"]
+  string: cuda{{ cuda_compiler_version | replace('.', '') }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [(gpu_variant or "").startswith("cuda")]
+  string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}                                                 # [gpu_variant == "none"]
   # TODO(PKG-15685): Windows (m2w64 go-cgo + CUDA + ninja) and osx (host llama-ui-embed
   # links conda libc++ against AR's older SDK libc++ -> missing bad_function_call) need
   # follow-up work; conda-forge's win builds are also red. This PR ships linux only.
   skip: true  # [win or osx]
   ignore_run_exports_from:
-    - libcublas-dev    # [cuda_compiler_version != "None"]
+    - libcublas-dev    # [(gpu_variant or "").startswith("cuda")]
   # ollama vendors its CUDA runtime under lib/ollama/cuda_vXX/ (loaded via $ORIGIN
   # rpath) and links the driver stub libcuda.so.1 (present only at runtime on a GPU
   # host). Whitelist these so --error-overlinking doesn't flag the vendored/stub DSOs.
-  missing_dso_whitelist:    # [cuda_compiler_version != "None"]
-    - "**/libcuda.so*"      # [cuda_compiler_version != "None"]
-    - "**/libggml-base.so*" # [cuda_compiler_version != "None"]
-    - "**/libcublas.so*"    # [cuda_compiler_version != "None"]
-    - "**/libcublasLt.so*"  # [cuda_compiler_version != "None"]
-    - "**/libcudart.so*"    # [cuda_compiler_version != "None"]
+  missing_dso_whitelist:    # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcuda.so*"      # [(gpu_variant or "").startswith("cuda")]
+    - "**/libggml-base.so*" # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcublas.so*"    # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcublasLt.so*"  # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcudart.so*"    # [(gpu_variant or "").startswith("cuda")]
 
 requirements:
   build:
@@ -44,25 +45,25 @@ requirements:
     - {{ stdlib('c') }}
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - {{ compiler('cuda') }}                        # [cuda_compiler_version != "None"]
-    - cuda-version =={{ cuda_compiler_version }}     # [cuda_compiler_version != "None"]
+    - {{ compiler('cuda') }}                        # [(gpu_variant or "").startswith("cuda")]
+    - cuda-version =={{ cuda_compiler_version }}     # [(gpu_variant or "").startswith("cuda")]
   host:
-    - cuda-version =={{ cuda_compiler_version }}     # [cuda_compiler_version != "None"]
-    - libcublas-dev                                  # [cuda_compiler_version != "None"]
+    - cuda-version =={{ cuda_compiler_version }}     # [(gpu_variant or "").startswith("cuda")]
+    - libcublas-dev                                  # [(gpu_variant or "").startswith("cuda")]
   run:
     # CUDA variants carry build_number + 100, so the solver prefers them on hosts
     # where __cuda is provided. __cuda gates installation to GPU machines, keeping
     # the solver from picking a CUDA build on a CPU-only host. cuda-version pins the
     # runtime CUDA major/minor to what we built against.
-    - __cuda                                         # [cuda_compiler_version != "None"]
-    - cuda-version {{ cuda_compiler_version }}       # [cuda_compiler_version != "None"]
+    - __cuda                                         # [(gpu_variant or "").startswith("cuda")]
+    - cuda-version {{ cuda_compiler_version }}       # [(gpu_variant or "").startswith("cuda")]
 
 test:
   commands:
     - HOME=/tmp ollama --version    # [unix]
 
 about:
-  home: https://ollama.com/
+  home: https://ollama.com
   license: MIT
   license_family: MIT
   license_file:

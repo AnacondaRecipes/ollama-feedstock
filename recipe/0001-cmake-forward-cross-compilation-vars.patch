@@ -1,3 +1,7 @@
+Origin: conda-forge/ollama-feedstock#141 (Ben Moss)
+Description: Forward HOST_CXX_COMPILER and CMAKE_MAKE_PROGRAM into the llama.cpp
+ ExternalProject sub-build so the host-side llama-ui-embed tool can be built.
+
 diff --git a/cmake/local.cmake b/cmake/local.cmake
 --- a/cmake/local.cmake
 +++ b/cmake/local.cmake
