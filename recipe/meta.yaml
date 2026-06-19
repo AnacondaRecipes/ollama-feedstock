@@ -49,6 +49,13 @@ requirements:
   host:
     - cuda-version =={{ cuda_compiler_version }}     # [cuda_compiler_version != "None"]
     - libcublas-dev                                  # [cuda_compiler_version != "None"]
+  run:
+    # CUDA variants carry build_number + 100, so the solver prefers them on hosts
+    # where __cuda is provided. __cuda gates installation to GPU machines, keeping
+    # the solver from picking a CUDA build on a CPU-only host. cuda-version pins the
+    # runtime CUDA major/minor to what we built against.
+    - __cuda                                         # [cuda_compiler_version != "None"]
+    - cuda-version {{ cuda_compiler_version }}       # [cuda_compiler_version != "None"]
 
 test:
   commands:
