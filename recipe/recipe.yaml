@@ -30,10 +30,13 @@ build:
       else: [build.sh]
   skip:
     - cuda and match(cuda_compiler_version, "<12")
-    # TODO(PKG-15685): Windows (m2w64 go-cgo + ninja + from-source llama.cpp) needs
-    # follow-up; conda-forge's win builds are also currently red. macOS is enabled
-    # (the host llama-ui-embed tool is built with Apple clang; see build.sh).
+    # TODO(PKG-15685): macOS and Windows skipped, tracked as follow-ups.
+    #  - osx: the fetched llama.cpp tools/ui llama-ui-embed host tool is built with
+    #    conda clang, whose newer libc++ (ne200100 ABI) needs std::bad_function_call
+    #    symbols absent from AR's macOS SDK 12.1 system libc++; the link fails.
+    #  - win: m2w64 go-cgo + ninja + from-source llama.cpp (conda-forge's win is red).
     - win
+    - osx
 
 requirements:
   build:

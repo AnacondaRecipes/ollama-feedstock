@@ -1,19 +1,8 @@
 #!/bin/bash
 set -ex
 
-# Host compiler for the build-time llama-ui-embed tool (forwarded by
-# 0001-cmake-forward-cross-compilation-vars.patch). Defaults to the conda C++
-# compiler; overridden on macOS below.
-HOST_CXX="${CXX}"
-
 if [[ "$target_platform" == osx-* ]]; then
     export CXXFLAGS="${CXXFLAGS} -D_LIBCPP_DISABLE_AVAILABILITY"
-    # The llama-ui-embed host tool links the system libc++. conda clang's libc++
-    # headers are far newer than AR's macOS SDK (12.1) runtime, so the tool
-    # references symbols (std::__1::bad_function_call, ne200100 ABI) the old
-    # libc++.dylib lacks. Build this host-only tool with Apple clang, whose libc++
-    # matches the SDK runtime. The shipped binaries still use the conda toolchain.
-    HOST_CXX="/usr/bin/clang++"
 fi
 
 # go-localereader v0.0.1 doesn't compile on Windows; replace with a patched fork.
@@ -35,7 +24,7 @@ esac
 cmake ${CMAKE_ARGS} -B build \
     -DOLLAMA_VERSION="${PKG_VERSION}" \
     -DOLLAMA_MLX_BACKENDS= \
-    -DHOST_CXX_COMPILER="${HOST_CXX}" \
+    -DHOST_CXX_COMPILER="${CXX}" \
     "${CMAKE_BACKEND_ARGS[@]}" \
     .
 cmake --build build --parallel ${CPU_COUNT}

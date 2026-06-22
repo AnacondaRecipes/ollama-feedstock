@@ -16,10 +16,15 @@ build:
   number: 0    # [gpu_variant == "none"]
   string: cuda{{ cuda_compiler_version | replace('.', '') }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [(gpu_variant or "").startswith("cuda")]
   string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}                                                 # [gpu_variant == "none"]
-  # TODO(PKG-15685): Windows (m2w64 go-cgo + ninja + from-source llama.cpp) needs
-  # follow-up; conda-forge's win builds are also red. macOS is enabled — the host
-  # llama-ui-embed tool is built with Apple clang to match AR's SDK libc++ (build.sh).
-  skip: true  # [win]
+  # TODO(PKG-15685): macOS and Windows are skipped, tracked as follow-ups.
+  #  - osx: the build-time llama-ui-embed tool (in the fetched llama.cpp tools/ui)
+  #    is compiled with conda clang, whose bleeding-edge libc++ (ne200100 ABI)
+  #    references std::bad_function_call symbols absent from AR's macOS SDK 12.1
+  #    system libc++, so its link fails. HOST_CXX_COMPILER is only honored by
+  #    tools/ui when cross-compiling, so it can't redirect this native build to
+  #    Apple clang; a fix needs a tools/ui patch or conda libcxx linking.
+  #  - win: m2w64 go-cgo + ninja + from-source llama.cpp (conda-forge's win is red too).
+  skip: true  # [win or osx]
   ignore_run_exports_from:
     - libcublas-dev    # [(gpu_variant or "").startswith("cuda")]
   # ollama vendors its CUDA runtime under lib/ollama/cuda_vXX/ (loaded via $ORIGIN
