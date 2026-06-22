@@ -16,10 +16,10 @@ build:
   number: 0    # [gpu_variant == "none"]
   string: cuda{{ cuda_compiler_version | replace('.', '') }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [(gpu_variant or "").startswith("cuda")]
   string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}                                                 # [gpu_variant == "none"]
-  # TODO(PKG-15685): Windows (m2w64 go-cgo + CUDA + ninja) and osx (host llama-ui-embed
-  # links conda libc++ against AR's older SDK libc++ -> missing bad_function_call) need
-  # follow-up work; conda-forge's win builds are also red. This PR ships linux only.
-  skip: true  # [win or osx]
+  # TODO(PKG-15685): Windows (m2w64 go-cgo + ninja + from-source llama.cpp) needs
+  # follow-up; conda-forge's win builds are also red. macOS is enabled — the host
+  # llama-ui-embed tool is built with Apple clang to match AR's SDK libc++ (build.sh).
+  skip: true  # [win]
   ignore_run_exports_from:
     - libcublas-dev    # [(gpu_variant or "").startswith("cuda")]
   # ollama vendors its CUDA runtime under lib/ollama/cuda_vXX/ (loaded via $ORIGIN
