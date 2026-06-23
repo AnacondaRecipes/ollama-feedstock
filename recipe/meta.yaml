@@ -44,7 +44,10 @@ requirements:
     - go-cgo 1.26.4
     - cmake
     - make
-    # llama.cpp is pulled via cmake FetchContent (git clone) at the pinned LLAMA_CPP_VERSION.
+    # ollama builds its own pinned llama.cpp (LLAMA_CPP_VERSION) from source, not the
+    # stock libllama package: it patches llama.cpp (llama/compat/*.patch) and compiles
+    # its in-process GGUF-compat layer into the llama/mtmd targets via target_sources,
+    # so a prebuilt libllama can't be substituted. cmake FetchContent git-clones it.
     - git
     - go-licenses >=1.6,<2
     - {{ stdlib('c') }}
