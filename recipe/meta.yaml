@@ -66,6 +66,9 @@ requirements:
 test:
   commands:
     - HOME=/tmp ollama --version    # [unix]
+    # Guard against a packaging regression dropping the native runtime payload
+    # (libggml/llama-server live under lib/ollama; cuda_vXX/ for GPU variants).
+    - test -d $PREFIX/lib/ollama    # [unix]
 
 about:
   home: https://ollama.com
@@ -76,7 +79,9 @@ about:
     - license-files/
   summary: Ollama CLI
   description: |
-    Ollama is an easy way to get local language models running on your computer through a command-line interface.
+    Ollama is a tool for running large language models locally. It wraps the
+    llama.cpp inference engine with model download and versioning, memory
+    scheduling, and an HTTP API, all driven from a single command-line interface.
   doc_url: https://github.com/ollama/ollama
   dev_url: https://github.com/ollama/ollama
 
