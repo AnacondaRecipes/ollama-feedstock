@@ -1,5 +1,6 @@
 context:
   version: "0.30.10"
+  llama_cpp_version: "b9672"
   cuda: ${{ "true" if cuda_compiler_version != "None" else "" }}
   cuda_build_string: cuda_${{ cuda_compiler_version | version_to_buildstring }}
   string_prefix: ${{ cuda_build_string if cuda else "cpu_" }}
@@ -10,10 +11,16 @@ package:
   version: ${{ version }}
 
 source:
-  url: https://github.com/ollama/ollama/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: 9a172295f668cb91b6f9065f0767e805fe59da679145191798933b9d36b45b93
-  patches:
-    - 0001-cmake-forward-cross-compilation-vars.patch
+  - url: https://github.com/ollama/ollama/archive/refs/tags/v${{ version }}.tar.gz
+    sha256: 9a172295f668cb91b6f9065f0767e805fe59da679145191798933b9d36b45b93
+    patches:
+      - 0001-cmake-forward-cross-compilation-vars.patch
+  # Pinned llama.cpp source (must match the LLAMA_CPP_VERSION file in the ollama
+  # tree); handed to cmake via FETCHCONTENT_SOURCE_DIR_LLAMA_CPP in build.sh so
+  # nothing is git-cloned at build time. ollama patches this tree at configure time.
+  - url: https://github.com/ggml-org/llama.cpp/archive/refs/tags/${{ llama_cpp_version }}.tar.gz
+    sha256: a27ccaeb51c9a8b9d9e8160c64546bf067b14ddff47840175dbc7fa2e14c3c38
+    target_directory: llama.cpp-src
 
 build:
   number: ${{ build_number }}
@@ -43,11 +50,11 @@ requirements:
     # AR's cgo_compiler_version (1.21) is too old for ollama's go.mod (go 1.26.0);
     # hardpin go-cgo to the latest on pkgs/main like wandb-feedstock instead of
     # ${{ compiler('go-cgo') }}.
-    - go-cgo 1.26.4
+    - go-cgo 1.26.5
     - cmake
     - make
-    # llama.cpp is pulled via cmake FetchContent (git clone) at the pinned
-    # LLAMA_CPP_VERSION; git must be present in the build environment.
+    # needed by ollama's llama.cpp compat patch step (`git apply`); the
+    # llama.cpp source itself is a pinned source entry above.
     - git
     - go-licenses ~=1.6
     - if: win

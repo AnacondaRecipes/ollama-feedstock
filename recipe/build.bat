@@ -7,7 +7,7 @@ set "CMAKE_BACKEND_ARGS="
 echo %cuda_compiler_version% | findstr /b "12" >nul && set "CMAKE_BACKEND_ARGS=-DOLLAMA_LLAMA_BACKENDS=cuda_v12"
 echo %cuda_compiler_version% | findstr /b "13" >nul && set "CMAKE_BACKEND_ARGS=-DOLLAMA_LLAMA_BACKENDS=cuda_v13"
 
-cmake %CMAKE_ARGS% -B build -DOLLAMA_VERSION=%PKG_VERSION% -DOLLAMA_MLX_BACKENDS= -DOLLAMA_GO_OUTPUT=%LIBRARY_BIN%\ollama.exe %CMAKE_BACKEND_ARGS% . || exit 1
+cmake %CMAKE_ARGS% -B build -DOLLAMA_VERSION=%PKG_VERSION% -DOLLAMA_MLX_BACKENDS= -DOLLAMA_GO_OUTPUT=%LIBRARY_BIN%\ollama.exe -DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP=%SRC_DIR%\llama.cpp-src %CMAKE_BACKEND_ARGS% . || exit 1
 cmake --build build --parallel || exit 1
 cmake --install build || exit 1
 

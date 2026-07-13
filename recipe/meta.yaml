@@ -1,14 +1,27 @@
 {% set version = "0.30.10" %}
+# Must match the LLAMA_CPP_VERSION file inside the ollama source at this version;
+# bump it together with `version` on every update.
+{% set llama_cpp_version = "b9672" %}
 
 package:
   name: ollama
   version: {{ version }}
 
 source:
-  url: https://github.com/ollama/ollama/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 9a172295f668cb91b6f9065f0767e805fe59da679145191798933b9d36b45b93
-  patches:
-    - 0001-cmake-forward-cross-compilation-vars.patch
+  - url: https://github.com/ollama/ollama/archive/refs/tags/v{{ version }}.tar.gz
+    sha256: 9a172295f668cb91b6f9065f0767e805fe59da679145191798933b9d36b45b93
+    patches:
+      - 0001-cmake-forward-cross-compilation-vars.patch
+  # ollama builds a CUSTOMIZED llama.cpp from source — it patches the tree
+  # (llama/compat/*.patch) and compiles its in-process GGUF-compat layer into the
+  # llama/mtmd targets via target_sources() — so the stock libllama package cannot
+  # be substituted. Pin that source here (checksummed, no build-time git clone)
+  # and hand it to cmake via FETCHCONTENT_SOURCE_DIR_LLAMA_CPP in build.sh;
+  # ollama applies its compat patches to this override tree at configure time
+  # (llama/server/CMakeLists.txt, idempotent `git apply`).
+  - url: https://github.com/ggml-org/llama.cpp/archive/refs/tags/{{ llama_cpp_version }}.tar.gz
+    sha256: a27ccaeb51c9a8b9d9e8160c64546bf067b14ddff47840175dbc7fa2e14c3c38
+    folder: llama.cpp-src
 
 build:
   # CUDA variants get build_number + 100 so the solver prefers them on GPU hosts.
@@ -41,13 +54,14 @@ requirements:
   build:
     # AR's cgo_compiler_version (1.21) is too old for ollama's go.mod (go 1.26.0);
     # hardpin go-cgo to the latest on pkgs/main like wandb-feedstock.
-    - go-cgo 1.26.4
+    # 1.26.5 is the 2026-07-07 security release (os.Root symlink escape
+    # CVE-2026-39822 + crypto/tls ECH privacy leak) — both relevant to a
+    # network-facing server binary.
+    - go-cgo 1.26.5
     - cmake
     - make
-    # ollama builds its own pinned llama.cpp (LLAMA_CPP_VERSION) from source, not the
-    # stock libllama package: it patches llama.cpp (llama/compat/*.patch) and compiles
-    # its in-process GGUF-compat layer into the llama/mtmd targets via target_sources,
-    # so a prebuilt libllama can't be substituted. cmake FetchContent git-clones it.
+    # needed by ollama's llama.cpp compat patch step (`git apply` via
+    # llama/compat/apply-patch.cmake); the source itself is a pinned entry above.
     - git
     - go-licenses >=1.6,<2
     - {{ stdlib('c') }}
