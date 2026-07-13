@@ -15,6 +15,16 @@ go mod tidy
 LLAMA_CPP_SRC="${SRC_DIR}/llama.cpp-src"
 test -f "${LLAMA_CPP_SRC}/CMakeLists.txt" || { echo "pinned llama.cpp source missing at ${LLAMA_CPP_SRC}"; exit 1; }
 
+# The top-level FETCHCONTENT_SOURCE_DIR_LLAMA_CPP contract expects a PRE-PATCHED
+# tree: cmake/local.cmake always forwards -DOLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON
+# to the llama-server sub-build (assuming its own ExternalProject patched the
+# clone — which the override path skips). Pre-apply ollama's compat patches here
+# with ollama's own idempotent applier (git apply under the hood; this is why
+# `git` is a build dep).
+pushd "${LLAMA_CPP_SRC}"
+cmake -DPATCH_DIR="${SRC_DIR}/llama/compat" -P "${SRC_DIR}/llama/compat/apply-patch.cmake"
+popd
+
 # Select the GPU backend from cuda_compiler_version. The CPU variant's sentinel is
 # "none" (the gpu_variant zip), but tolerate "None"/empty too to stay robust.
 CMAKE_BACKEND_ARGS=()
@@ -27,9 +37,8 @@ esac
 
 # The native runtime (ggml/llama.cpp built from the pinned source entry) and the
 # Go binary are both produced by the cmake build. FETCHCONTENT_SOURCE_DIR_LLAMA_CPP
-# points FetchContent at the conda-managed tree instead of a build-time git clone;
-# ollama applies its compat patches to that tree at configure time
-# (llama/server/CMakeLists.txt — idempotent, safe across the per-backend sub-builds).
+# points FetchContent at the conda-managed (pre-patched above) tree instead of a
+# build-time git clone.
 cmake ${CMAKE_ARGS} -B build \
     -DOLLAMA_VERSION="${PKG_VERSION}" \
     -DOLLAMA_MLX_BACKENDS= \

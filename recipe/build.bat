@@ -3,6 +3,12 @@ go mod tidy || exit 1
 
 set CMAKE_GENERATOR=Ninja
 
+rem Pre-apply ollama's llama.cpp compat patches (top-level source override expects
+rem a pre-patched tree; see build.sh for the full explanation).
+pushd %SRC_DIR%\llama.cpp-src
+cmake -DPATCH_DIR=%SRC_DIR%\llama\compat -P %SRC_DIR%\llama\compat\apply-patch.cmake || exit 1
+popd
+
 set "CMAKE_BACKEND_ARGS="
 echo %cuda_compiler_version% | findstr /b "12" >nul && set "CMAKE_BACKEND_ARGS=-DOLLAMA_LLAMA_BACKENDS=cuda_v12"
 echo %cuda_compiler_version% | findstr /b "13" >nul && set "CMAKE_BACKEND_ARGS=-DOLLAMA_LLAMA_BACKENDS=cuda_v13"

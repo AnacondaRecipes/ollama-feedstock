@@ -16,8 +16,8 @@ source:
     patches:
       - 0001-cmake-forward-cross-compilation-vars.patch
   # Pinned llama.cpp source (must match the LLAMA_CPP_VERSION file in the ollama
-  # tree); handed to cmake via FETCHCONTENT_SOURCE_DIR_LLAMA_CPP in build.sh so
-  # nothing is git-cloned at build time. ollama patches this tree at configure time.
+  # tree); build.sh pre-applies ollama's compat patches to it, then hands it to
+  # cmake via FETCHCONTENT_SOURCE_DIR_LLAMA_CPP so nothing is git-cloned at build time.
   - url: https://github.com/ggml-org/llama.cpp/archive/refs/tags/${{ llama_cpp_version }}.tar.gz
     sha256: a27ccaeb51c9a8b9d9e8160c64546bf067b14ddff47840175dbc7fa2e14c3c38
     target_directory: llama.cpp-src

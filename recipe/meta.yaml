@@ -15,10 +15,11 @@ source:
   # ollama builds a CUSTOMIZED llama.cpp from source — it patches the tree
   # (llama/compat/*.patch) and compiles its in-process GGUF-compat layer into the
   # llama/mtmd targets via target_sources() — so the stock libllama package cannot
-  # be substituted. Pin that source here (checksummed, no build-time git clone)
-  # and hand it to cmake via FETCHCONTENT_SOURCE_DIR_LLAMA_CPP in build.sh;
-  # ollama applies its compat patches to this override tree at configure time
-  # (llama/server/CMakeLists.txt, idempotent `git apply`).
+  # be substituted. Pin that source here (checksummed, no build-time git clone);
+  # build.sh pre-applies ollama's compat patches to this tree (the top-level
+  # FETCHCONTENT_SOURCE_DIR_LLAMA_CPP contract expects a pre-patched source —
+  # cmake/local.cmake forwards OLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON to the
+  # llama-server sub-build) and hands it to cmake.
   - url: https://github.com/ggml-org/llama.cpp/archive/refs/tags/{{ llama_cpp_version }}.tar.gz
     sha256: a27ccaeb51c9a8b9d9e8160c64546bf067b14ddff47840175dbc7fa2e14c3c38
     folder: llama.cpp-src
