@@ -5,7 +5,9 @@ if [[ "$target_platform" == osx-* ]]; then
     export CXXFLAGS="${CXXFLAGS} -D_LIBCPP_DISABLE_AVAILABILITY"
 fi
 
-# go-localereader v0.0.1 doesn't compile on Windows; replace with a patched fork.
+# Bump go-localereader past the v0.0.1 tag (which fails to build on Windows) to
+# mattn's own later commit — not a fork; harmless on unix, keeps go.mod consistent
+# with the win follow-up (build.bat).
 go mod edit -replace github.com/mattn/go-localereader@v0.0.1=github.com/mattn/go-localereader@v0.0.2-0.20220822084749-2491eb6c1c75
 go mod tidy
 
