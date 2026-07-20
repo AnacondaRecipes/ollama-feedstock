@@ -9,7 +9,7 @@ package:
   version: {{ version }}
 
 source:
-  - url: https://github.com/ollama/ollama/archive/refs/tags/v{{ version }}.tar.gz
+  - url: https://github.com/{{ name }}/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
     sha256: 9a172295f668cb91b6f9065f0767e805fe59da679145191798933b9d36b45b93
     patches:
       - 0001-cmake-forward-cross-compilation-vars.patch
