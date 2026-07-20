@@ -1,0 +1,115 @@
+{% set name = "ollama" %}
+{% set version = "0.30.10" %}
+# Must match the LLAMA_CPP_VERSION file inside the ollama source at this version;
+# bump it together with `version` on every update.
+{% set llama_cpp_version = "b9672" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  - url: https://github.com/{{ name }}/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
+    sha256: 9a172295f668cb91b6f9065f0767e805fe59da679145191798933b9d36b45b93
+    patches:
+      - 0001-cmake-forward-cross-compilation-vars.patch
+  # ollama builds a CUSTOMIZED llama.cpp from source — it patches the tree
+  # (llama/compat/*.patch) and compiles its in-process GGUF-compat layer into the
+  # llama/mtmd targets via target_sources() — so the stock libllama package cannot
+  # be substituted. Pin that source here (checksummed, no build-time git clone);
+  # build.sh pre-applies ollama's compat patches to this tree (the top-level
+  # FETCHCONTENT_SOURCE_DIR_LLAMA_CPP contract expects a pre-patched source —
+  # cmake/local.cmake forwards OLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON to the
+  # llama-server sub-build) and hands it to cmake.
+  - url: https://github.com/ggml-org/llama.cpp/archive/refs/tags/{{ llama_cpp_version }}.tar.gz
+    sha256: a27ccaeb51c9a8b9d9e8160c64546bf067b14ddff47840175dbc7fa2e14c3c38
+    folder: llama.cpp-src
+
+build:
+  # CUDA variants get build_number + 100 so the solver prefers them on GPU hosts.
+  number: 100  # [(gpu_variant or "").startswith("cuda")]
+  number: 0    # [gpu_variant == "none"]
+  string: cuda{{ cuda_compiler_version | replace('.', '') }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [(gpu_variant or "").startswith("cuda")]
+  string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}                                                 # [gpu_variant == "none"]
+  # TODO(PKG-15685): macOS and Windows are skipped, tracked as follow-ups.
+  #  - osx: the build-time llama-ui-embed tool (in the fetched llama.cpp tools/ui)
+  #    is compiled with conda clang, whose bleeding-edge libc++ (ne200100 ABI)
+  #    references std::bad_function_call symbols absent from AR's macOS SDK 12.1
+  #    system libc++, so its link fails. HOST_CXX_COMPILER is only honored by
+  #    tools/ui when cross-compiling, so it can't redirect this native build to
+  #    Apple clang; a fix needs a tools/ui patch or conda libcxx linking.
+  #  - win: m2w64 go-cgo + ninja + from-source llama.cpp (conda-forge's win is red too).
+  skip: true  # [win or osx]
+  ignore_run_exports_from:
+    - libcublas-dev    # [(gpu_variant or "").startswith("cuda")]
+  # ollama vendors its CUDA runtime under lib/ollama/cuda_vXX/ (loaded via $ORIGIN
+  # rpath) and links the driver stub libcuda.so.1 (present only at runtime on a GPU
+  # host). Whitelist these so --error-overlinking doesn't flag the vendored/stub DSOs.
+  missing_dso_whitelist:    # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcuda.so*"      # [(gpu_variant or "").startswith("cuda")]
+    - "**/libggml-base.so*" # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcublas.so*"    # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcublasLt.so*"  # [(gpu_variant or "").startswith("cuda")]
+    - "**/libcudart.so*"    # [(gpu_variant or "").startswith("cuda")]
+
+requirements:
+  build:
+    # AR's cgo_compiler_version (1.21) is too old for ollama's go.mod (go 1.26.0);
+    # hardpin go-cgo to the latest on pkgs/main like wandb-feedstock.
+    # 1.26.5 is the 2026-07-07 security release (os.Root symlink escape
+    # CVE-2026-39822 + crypto/tls ECH privacy leak) — both relevant to a
+    # network-facing server binary.
+    - go-cgo 1.26.5
+    - cmake
+    - make
+    # needed by ollama's llama.cpp compat patch step (`git apply` via
+    # llama/compat/apply-patch.cmake); the source itself is a pinned entry above.
+    - git
+    - go-licenses >=1.6,<2
+    - {{ stdlib('c') }}
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - {{ compiler('cuda') }}                        # [(gpu_variant or "").startswith("cuda")]
+    - cuda-version =={{ cuda_compiler_version }}     # [(gpu_variant or "").startswith("cuda")]
+  host:
+    - cuda-version =={{ cuda_compiler_version }}     # [(gpu_variant or "").startswith("cuda")]
+    - libcublas-dev                                  # [(gpu_variant or "").startswith("cuda")]
+  run:
+    # CUDA variants carry build_number + 100, so the solver prefers them on hosts
+    # where __cuda is provided. __cuda gates installation to GPU machines, keeping
+    # the solver from picking a CUDA build on a CPU-only host. cuda-version pins the
+    # runtime CUDA major/minor to what we built against.
+    - __cuda                                         # [(gpu_variant or "").startswith("cuda")]
+    - cuda-version {{ cuda_compiler_version }}       # [(gpu_variant or "").startswith("cuda")]
+
+test:
+  commands:
+    - HOME=/tmp ollama --version    # [unix]
+    # Guard against a packaging regression dropping the native runtime payload
+    # (libggml/llama-server live under lib/ollama; cuda_vXX/ for GPU variants).
+    - test -d $PREFIX/lib/ollama    # [unix]
+
+about:
+  home: https://ollama.com
+  license: MIT
+  license_family: MIT
+  license_file:
+    - LICENSE
+    - license-files/
+    # llama.cpp (MIT) is patched and compiled into the ollama binary from the
+    # pinned llama.cpp-src source above, so its license must ship too.
+    - llama.cpp-src/LICENSE
+  summary: Ollama CLI
+  description: |
+    Ollama is a tool for running large language models locally. It wraps the
+    llama.cpp inference engine with model download and versioning, memory
+    scheduling, and an HTTP API, all driven from a single command-line interface.
+  doc_url: https://github.com/ollama/ollama
+  dev_url: https://github.com/ollama/ollama
+
+extra:
+  recipe-maintainers:
+    - jmakovicka
+    - sodre
+    - benmoss
+    - xkong-anaconda

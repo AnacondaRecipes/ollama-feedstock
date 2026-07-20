@@ -1,0 +1,3 @@
+# Go binary + llama.cpp built from source (cmake FetchContent) + CUDA 12.9/13.0
+# variants make this a long build; raise the default 2h task timeout.
+task_timeout: 25200  # 7 hours
