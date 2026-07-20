@@ -5,7 +5,7 @@
 {% set llama_cpp_version = "b9672" %}
 
 package:
-  name: ollama
+  name: {{ name }}
   version: {{ version }}
 
 source:
