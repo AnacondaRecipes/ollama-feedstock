@@ -1,8 +1,8 @@
 {% set name = "ollama" %}
-{% set version = "0.30.10" %}
+{% set version = "0.34.2" %}
 # Must match the LLAMA_CPP_VERSION file inside the ollama source at this version;
 # bump it together with `version` on every update.
-{% set llama_cpp_version = "b9672" %}
+{% set llama_cpp_version = "b10969" %}
 
 package:
   name: {{ name }}
@@ -10,7 +10,7 @@ package:
 
 source:
   - url: https://github.com/{{ name }}/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
-    sha256: 9a172295f668cb91b6f9065f0767e805fe59da679145191798933b9d36b45b93
+    sha256: 3fb06dc496f321749423792066f299205c433b815540c1f23f18368540401640
     patches:
       - 0001-cmake-forward-cross-compilation-vars.patch
   # ollama builds a CUSTOMIZED llama.cpp from source — it patches the tree
@@ -22,7 +22,7 @@ source:
   # cmake/local.cmake forwards OLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON to the
   # llama-server sub-build) and hands it to cmake.
   - url: https://github.com/ggml-org/llama.cpp/archive/refs/tags/{{ llama_cpp_version }}.tar.gz
-    sha256: a27ccaeb51c9a8b9d9e8160c64546bf067b14ddff47840175dbc7fa2e14c3c38
+    sha256: 3056db8c09f4a2ab4cbf43a57c914e980c280595a480a68fcdc8edd6c023d0a7
     folder: llama.cpp-src
 
 build:
@@ -30,7 +30,7 @@ build:
   number: 100  # [(gpu_variant or "").startswith("cuda")]
   number: 0    # [gpu_variant == "none"]
   string: cuda{{ cuda_compiler_version | replace('.', '') }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [(gpu_variant or "").startswith("cuda")]
-  string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}                                                 # [gpu_variant == "none"]
+  string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [gpu_variant == "none"]
   # TODO(PKG-15685): macOS and Windows are skipped, tracked as follow-ups.
   #  - osx: the build-time llama-ui-embed tool (in the fetched llama.cpp tools/ui)
   #    is compiled with conda clang, whose bleeding-edge libc++ (ne200100 ABI)

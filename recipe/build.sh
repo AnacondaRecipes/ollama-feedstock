@@ -24,7 +24,8 @@ test -f "${LLAMA_CPP_SRC}/CMakeLists.txt" || { echo "pinned llama.cpp source mis
 # with ollama's own idempotent applier (git apply under the hood; this is why
 # `git` is a build dep).
 pushd "${LLAMA_CPP_SRC}"
-cmake -DPATCH_DIR="${SRC_DIR}/llama/compat" -P "${SRC_DIR}/llama/compat/apply-patch.cmake"
+cmake -DPATCH_DIR="${SRC_DIR}/llama/compat" -DPATCH_LABEL=llama/compat \
+      -P "${SRC_DIR}/cmake/apply-git-patches.cmake"
 popd
 
 # Select the GPU backend from cuda_compiler_version. The CPU variant's sentinel is
