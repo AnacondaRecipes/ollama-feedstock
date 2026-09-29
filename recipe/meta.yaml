@@ -29,6 +29,8 @@ build:
   # CUDA variants get build_number + 100 so the solver prefers them on GPU hosts.
   number: 100  # [(gpu_variant or "").startswith("cuda")]
   number: 0    # [gpu_variant == "none"]
+  script_env:
+    - OLLAMA_LLAMA_CPP_PIN={{ llama_cpp_version }}
   string: cuda{{ cuda_compiler_version | replace('.', '') }}_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [(gpu_variant or "").startswith("cuda")]
   string: cpu_h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}  # [gpu_variant == "none"]
   # TODO(PKG-15685): macOS and Windows are skipped, tracked as follow-ups.

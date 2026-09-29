@@ -16,6 +16,8 @@ go mod tidy
 # upstream's: the recipe's {{ llama_cpp_version }} must equal LLAMA_CPP_VERSION.
 LLAMA_CPP_SRC="${SRC_DIR}/llama.cpp-src"
 test -f "${LLAMA_CPP_SRC}/CMakeLists.txt" || { echo "pinned llama.cpp source missing at ${LLAMA_CPP_SRC}"; exit 1; }
+test "$(tr -d '[:space:]' < "${SRC_DIR}/LLAMA_CPP_VERSION")" = "${OLLAMA_LLAMA_CPP_PIN}" \
+  || { echo "llama.cpp pin drift: recipe=${OLLAMA_LLAMA_CPP_PIN} upstream=$(cat "${SRC_DIR}/LLAMA_CPP_VERSION")"; exit 1; }
 
 # The top-level FETCHCONTENT_SOURCE_DIR_LLAMA_CPP contract expects a PRE-PATCHED
 # tree: cmake/local.cmake always forwards -DOLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON
