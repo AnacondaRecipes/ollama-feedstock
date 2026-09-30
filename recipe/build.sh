@@ -16,6 +16,8 @@ go mod tidy
 # upstream's: the recipe's {{ llama_cpp_version }} must equal LLAMA_CPP_VERSION.
 LLAMA_CPP_SRC="${SRC_DIR}/llama.cpp-src"
 test -f "${LLAMA_CPP_SRC}/CMakeLists.txt" || { echo "pinned llama.cpp source missing at ${LLAMA_CPP_SRC}"; exit 1; }
+test "$(tr -d '[:space:]' < "${SRC_DIR}/LLAMA_CPP_VERSION")" = "${OLLAMA_LLAMA_CPP_PIN}" \
+  || { echo "llama.cpp pin drift: recipe=${OLLAMA_LLAMA_CPP_PIN} upstream=$(cat "${SRC_DIR}/LLAMA_CPP_VERSION")"; exit 1; }
 
 # The top-level FETCHCONTENT_SOURCE_DIR_LLAMA_CPP contract expects a PRE-PATCHED
 # tree: cmake/local.cmake always forwards -DOLLAMA_LLAMA_CPP_SKIP_COMPAT_PATCH=ON
@@ -24,7 +26,8 @@ test -f "${LLAMA_CPP_SRC}/CMakeLists.txt" || { echo "pinned llama.cpp source mis
 # with ollama's own idempotent applier (git apply under the hood; this is why
 # `git` is a build dep).
 pushd "${LLAMA_CPP_SRC}"
-cmake -DPATCH_DIR="${SRC_DIR}/llama/compat" -P "${SRC_DIR}/llama/compat/apply-patch.cmake"
+cmake -DPATCH_DIR="${SRC_DIR}/llama/compat" -DPATCH_LABEL=llama/compat \
+      -P "${SRC_DIR}/cmake/apply-git-patches.cmake"
 popd
 
 # Select the GPU backend from cuda_compiler_version. The CPU variant's sentinel is
